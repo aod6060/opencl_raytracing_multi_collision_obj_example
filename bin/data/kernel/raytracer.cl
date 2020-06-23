@@ -1,7 +1,6 @@
 /*
     raytracer.cl
 */
-
 struct SDL_Color {
     uchar r;
     uchar g;
@@ -38,13 +37,46 @@ struct Material {
     float specularFactor;
 };
 
+enum SceneObjectType {
+    SOT_SPHERE = 0,
+    SOT_PLANE,
+    SOT_CUBE,
+    SOT_TORUS,
+    SOT_CAPSULE,
+    SOT_CYLINDER,
+    SOT_TRIANGLE,
+    SOT_SIZE
+};
+
+struct SceneObject {
+    float3 position;
+    enum SceneObjectType type;
+    uint materialIndex;
+
+    // Sphere
+    float sphereRadius;
+    // Plane
+
+    // Cube
+
+    // Torus
+
+    // Capsule
+
+    // Cylinder
+
+    // Triangle
+
+};
+
+/*
 struct Sphere {
     float3 position;
     uint materialIndex;
 
     float radius;
 };
-
+*/
 struct Light {
     float3 position;
     float intencity;
@@ -53,7 +85,7 @@ struct Light {
 
 struct Hit {
     bool isHit;
-    struct Sphere sphere;
+    struct SceneObject sceneObject;
     float t;
 };
 
@@ -71,12 +103,12 @@ struct Ray camera_makeRay(float2 point, struct Camera camera) {
     return ray;
 }
 
-float2 intersection(struct Ray ray, struct Sphere sphere) {
+float2 sphereIntersection(struct Ray ray, struct SceneObject sphere) {
     float3 v = ray.position - sphere.position;
 
     float k1 = dot(ray.direction, ray.direction);
     float k2 = 2 * dot(v, ray.direction);
-    float k3 = dot(v, v) - sphere.radius * sphere.radius;
+    float k3 = dot(v, v) - sphere.sphereRadius * sphere.sphereRadius;
 
     float d = k2 * k2 - 4 * k1 * k3;
 
@@ -92,26 +124,30 @@ struct Hit closestIntersection(
     struct Ray ray, 
     float zmin, 
     float zmax,
-     __global struct Sphere* spheres, 
-     uint sphereLength, 
+     __global struct SceneObject* sceneObjects, 
+     uint sceneObjectsLength, 
      float t) {
     //bool b = false;
     struct Hit hit;
     hit.isHit = false;
     hit.t = t;
 
-    for(uint i = 0; i < sphereLength; i++) {
-        float2 tv = intersection(ray, spheres[i]);
+    for(uint i = 0; i < sceneObjectsLength; i++) {
+        float2 tv = (float2)(0.0f, 0.0f);
+
+        if(sceneObjects[i].type == SOT_SPHERE) {
+            tv = sphereIntersection(ray, sceneObjects[i]);
+        }
 
         if((tv.x >= zmin && tv.x <= zmax) && tv.x < hit.t) {
             hit.t = tv.x;
-            hit.sphere = spheres[i];
+            hit.sceneObject = sceneObjects[i];
             hit.isHit = true;
         }
 
         if((tv.y >= zmin && tv.y <= zmax) && tv.y < hit.t) {
             hit.t = tv.y;
-            hit.sphere = spheres[i];
+            hit.sceneObject = sceneObjects[i];
             hit.isHit = true;
         }
     }
@@ -127,8 +163,8 @@ struct ReflectHit computeAmbient(
     struct Ray ray,
     float zmin,
     float zmax,
-    __global struct Sphere* spheres,
-    uint sphereLength,
+    __global struct SceneObject* sceneObjects,
+    uint sceneObjectsLength,
     __global struct Light* lights, 
     uint lightLength,
     __global struct Material* materials,
@@ -139,8 +175,8 @@ struct ReflectHit computeAmbient(
         ray, 
         zmin, 
         zmax, 
-        spheres, 
-        sphereLength, 
+        sceneObjects, 
+        sceneObjectsLength, 
         zmax);
 
     if(!hit.isHit) {
@@ -152,13 +188,13 @@ struct ReflectHit computeAmbient(
     }
 
     float3 P = ray.position + ray.direction * hit.t;
-    float3 N = P - hit.sphere.position;
+    float3 N = P - hit.sceneObject.position;
     N = normalize(N);
     float3 V = -ray.direction;
 
     float3 light = (float3)(0.0, 0.0, 0.0);
 
-    struct Material m = materials[hit.sphere.materialIndex];
+    struct Material m = materials[hit.sceneObject.materialIndex];
 
     for(int i = 0; i < lightLength; i++) {
         struct Ray shadowRay;
@@ -169,8 +205,8 @@ struct ReflectHit computeAmbient(
             shadowRay,
             0.001f,
             1024.0f,
-            spheres,
-            sphereLength,
+            sceneObjects,
+            sceneObjectsLength,
             1024.0f
         );
 
@@ -213,8 +249,8 @@ struct Color computeLighting(
     float3 N, 
     float3 V, 
     struct Hit hit, 
-    __global struct Sphere* spheres,
-    uint sphereLength,
+    __global struct SceneObject* sceneObjects,
+    uint sceneObjectsLength,
     __global struct Light* lights, 
     uint lightLength,
     __global struct Material* materials,
@@ -223,7 +259,7 @@ struct Color computeLighting(
 
     float3 light = (float3)(0.0f, 0.0f, 0.0f);
 
-    struct Material m = materials[hit.sphere.materialIndex];
+    struct Material m = materials[hit.sceneObject.materialIndex];
 
     for(uint i = 0; i < lightLength; i++) {
 
@@ -235,8 +271,8 @@ struct Color computeLighting(
             shadowRay,
             0.001f,
             1024.0f,
-            spheres,
-            sphereLength,
+            sceneObjects,
+            sceneObjectsLength,
             1024.0f
         );
 
@@ -247,11 +283,8 @@ struct Color computeLighting(
         float3 L = normalize(lights[i].position - P);
         float3 H = normalize(L + V);
 
-
         float ndotl = dot(N, L);
         float ndoth = dot(N, H);
-
-        
 
         float3 diffuse = m.color * lights[i].color * ndotl;
         float3 specular = lights[i].color * pow(ndoth, m.specularFactor * 256.0f);
@@ -282,8 +315,8 @@ struct Color computeLighting(
         reflectRay,
         0.1f,
         1024.0f,
-        spheres,
-        sphereLength,
+        sceneObjects,
+        sceneObjectsLength,
         lights,
         lightLength,
         materials,
@@ -295,8 +328,8 @@ struct Color computeLighting(
         iteration1.nextRay,
         0.1f,
         1024.0f,
-        spheres,
-        sphereLength,
+        sceneObjects,
+        sceneObjectsLength,
         lights,
         lightLength,
         materials,
@@ -319,10 +352,10 @@ struct Color raytracer(
     float zmin, 
     float zmax, 
     struct Color clearColor, 
-    __global struct Sphere* s, 
-    uint sphereLength,
-    __global struct Light* l,
-    uint lightLength,
+    __global struct SceneObject* sceneObjects, 
+    uint sceneObjectsLength,
+    __global struct Light* lights,
+    uint lightsLength,
     __global struct Material* materials,
     uint materialsLength) 
 {
@@ -330,8 +363,8 @@ struct Color raytracer(
         ray, 
         zmin, 
         zmax, 
-        s, 
-        sphereLength, 
+        sceneObjects, 
+        sceneObjectsLength, 
         zmax);
 
     if(!hit.isHit) {
@@ -340,7 +373,7 @@ struct Color raytracer(
 
     // Lighting
     float3 P = ray.position + ray.direction * hit.t;
-    float3 N = P - hit.sphere.position;
+    float3 N = P - hit.sceneObject.position;
     N = normalize(N);
 
     struct Color temp = computeLighting(
@@ -349,10 +382,10 @@ struct Color raytracer(
         N,
         -ray.direction,
         hit,
-        s,
-        sphereLength,
-        l,
-        lightLength,
+        sceneObjects,
+        sceneObjectsLength,
+        lights,
+        lightsLength,
         materials,
         materialsLength,
         (float3)(clearColor.r, clearColor.g, clearColor.b)
@@ -363,10 +396,10 @@ struct Color raytracer(
 
 __kernel void renderer(
     __global struct Color* framebuffer,
-    __global struct Sphere* spheres,
-    uint sphereLength,
+    __global struct SceneObject* sceneObjects,
+    uint sceneObjectsLength,
     __global struct Light* lights,
-    uint lightLength,
+    uint lightsLength,
     __global struct Material* materials,
     uint materialsLength,
     struct Camera camera,
@@ -389,10 +422,10 @@ __kernel void renderer(
         camera.zmin, 
         camera.zmax, 
         clearColor, 
-        spheres, 
-        sphereLength,
+        sceneObjects, 
+        sceneObjectsLength,
         lights,
-        lightLength,
+        lightsLength,
         materials,
         materialsLength);
 

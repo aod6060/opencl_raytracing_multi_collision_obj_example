@@ -49,8 +49,19 @@ void app_init() {
 
 	graphics::uploadMaterials(materials);
 
-	// Spheres
-	std::vector<graphics::Sphere> spheres = {
+	// Scene Objects
+	std::vector<graphics::SceneObject> sceneObjects = {
+		graphics::createSphereSceneObject(glm::vec3(-8, 0, 0), 0, 1),
+		graphics::createSphereSceneObject(glm::vec3(0, 0, -8), 1, 1),
+		graphics::createSphereSceneObject(glm::vec3(8, 0, 0), 2, 1),
+		graphics::createSphereSceneObject(glm::vec3(0, 0, 9), 3, 1),
+		graphics::createSphereSceneObject(glm::vec3(0, -5001, 0), 4, 5000)
+	};
+
+	graphics::uploadSceneObject(sceneObjects);
+
+	/*
+	std::vector<graphics::SceneObject> sceneObjects = {
 		graphics::createSphere(glm::vec3(-8, 0, 0), 1, 0),
 		graphics::createSphere(glm::vec3(0, 0, -8), 1, 1),
 		graphics::createSphere(glm::vec3(8, 0, 0), 1, 2),
@@ -59,7 +70,7 @@ void app_init() {
 	};
 
 	graphics::uploadSpheres(spheres);
-
+	*/
 	// Lights
 	std::vector<graphics::Light> lights = {
 		graphics::createLight(glm::vec3(0.0f, 1.0f, 0.0f), 0.6f, glm::vec3(1.0f, 1.0f, 1.0f))

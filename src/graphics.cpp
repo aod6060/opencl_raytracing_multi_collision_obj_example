@@ -16,8 +16,8 @@ namespace graphics {
 	cl_mem framebuffer;
 	cl_mem screen;
 
-	cl_mem spheres;
-	size_t spheresLength;
+	cl_mem sceneObjects;
+	size_t sceneObjectsLength;
 
 	cl_mem lights;
 	size_t lightsLength;
@@ -138,7 +138,7 @@ namespace graphics {
 	}
 
 	void release() {
-		clReleaseMemObject(spheres);
+		clReleaseMemObject(sceneObjects);
 		clReleaseMemObject(lights);
 		clReleaseMemObject(materials);
 		clReleaseMemObject(screen);
@@ -150,6 +150,37 @@ namespace graphics {
 		clReleaseContext(context);
 	}
 
+	SceneObject createSphereSceneObject(
+		const glm::vec3& position, 
+		cl_uint materialIndex, 
+		float radius) {
+
+		SceneObject temp;
+		toFloat3(temp.position, position);
+		temp.type = SceneObjectType::SOT_SPHERE;
+		temp.materialIndex = materialIndex;
+		temp.sphereRadius = radius;
+		return temp;
+	}
+
+	void uploadSceneObject(std::vector<SceneObject>& so) {
+		if (sceneObjects) {
+			clReleaseMemObject(sceneObjects);
+		}
+		cl_int err;
+		sceneObjects = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, so.size() * sizeof(SceneObject), so.data(), &err);
+
+		if (!sceneObjects) {
+			std::cout << "spheres wasn't created" << std::endl;
+			app::exit();
+			exit(1);
+		}
+
+		sceneObjectsLength = so.size();
+	}
+
+
+	/*
 	Sphere createSphere(
 		const glm::vec3& position,
 		float radius,
@@ -177,6 +208,7 @@ namespace graphics {
 
 		spheresLength = s.size();
 	}
+	*/
 
 	Light createLight(
 		const glm::vec3& position,
@@ -352,8 +384,8 @@ namespace graphics {
 		};
 
 		err = clSetKernelArg(rendererKernel, 0, sizeof(cl_mem), (void*)&framebuffer);
-		err |= clSetKernelArg(rendererKernel, 1, sizeof(cl_mem), (void*)&spheres);
-		err |= clSetKernelArg(rendererKernel, 2, sizeof(size_t), (void*)&spheresLength);
+		err |= clSetKernelArg(rendererKernel, 1, sizeof(cl_mem), (void*)&sceneObjects);
+		err |= clSetKernelArg(rendererKernel, 2, sizeof(size_t), (void*)&sceneObjectsLength);
 		err |= clSetKernelArg(rendererKernel, 3, sizeof(cl_mem), (void*)&lights);
 		err |= clSetKernelArg(rendererKernel, 4, sizeof(size_t), (void*)&lightsLength);
 		err |= clSetKernelArg(rendererKernel, 5, sizeof(cl_mem), (void*)&materials);

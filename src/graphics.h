@@ -15,6 +15,38 @@ namespace graphics {
 		cl_float specularFactor;
 	};
 
+	enum SceneObjectType {
+		SOT_SPHERE = 0,
+		SOT_PLANE,
+		SOT_CUBE,
+		SOT_TORUS,
+		SOT_CAPSULE,
+		SOT_CYLINDER,
+		SOT_TRIANGLE,
+		SOT_SIZE
+	};
+
+	struct SceneObject {
+		cl_float3 position;
+		SceneObjectType type;
+		cl_uint materialIndex;
+
+		// Sphere
+		cl_float sphereRadius;
+		// Plane
+
+		// Cube
+
+		// Torus
+
+		// Capsule
+
+		// Cylinder
+
+		// Triangle
+	};
+
+	/*
 	struct Sphere {
 		cl_float3 position;
 		cl_uint materialIndex;
@@ -28,6 +60,7 @@ namespace graphics {
 		// Cylinder Data
 		// Triangle Data
 	};
+	*/
 
 	struct Light {
 		cl_float3 position;
@@ -51,7 +84,7 @@ namespace graphics {
 
 	void init();
 	void release();
-
+	/*
 	Sphere createSphere(
 		const glm::vec3& position,
 		float radius,
@@ -59,6 +92,11 @@ namespace graphics {
 	);
 
 	void uploadSpheres(std::vector<Sphere>& spheres);
+	*/
+
+	SceneObject createSphereSceneObject(const glm::vec3& position, cl_uint materialIndex, float radius);
+
+	void uploadSceneObject(std::vector<SceneObject>& sceneObjects);
 
 	Light createLight(
 		const glm::vec3& position,
