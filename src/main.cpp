@@ -40,11 +40,11 @@ void app_init() {
 
 	// Materials
 	std::vector<graphics::Material> materials = {
-		graphics::createMaterial(glm::vec3(0.5f)),
-		graphics::createMaterial(glm::vec3(0.0f, 0.5f, 0.0f)),
-		graphics::createMaterial(glm::vec3(0.0f, 0.0f, 0.5f)),
-		graphics::createMaterial(glm::vec3(0.5f, 0.0f, 0.0f)),
-		graphics::createMaterial(glm::vec3(0.5f, 0.5f, 0.0f))
+		graphics::createMaterial(glm::vec3(0.5f), 0.5f),
+		graphics::createMaterial(glm::vec3(0.0f, 0.5f, 0.0f), 0.5f),
+		graphics::createMaterial(glm::vec3(0.0f, 0.0f, 0.5f), 0.5f),
+		graphics::createMaterial(glm::vec3(0.5f, 0.0f, 0.0f), 0.5f),
+		graphics::createMaterial(glm::vec3(0.5f, 0.5f, 0.0f), 0.5f)
 	};
 
 	graphics::uploadMaterials(materials);
@@ -75,7 +75,7 @@ void app_render() {
 
 	cl_float3 clearColor;
 
-	graphics::toFloat3(clearColor, glm::vec3(0.0f, 0.0f, 0.0f));
+	graphics::toFloat3(clearColor, glm::vec3(0.53f, 0.81f, 0.92f));
 
 	graphics::raytrace(clearColor, camera);
 

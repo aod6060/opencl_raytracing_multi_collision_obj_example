@@ -207,10 +207,12 @@ namespace graphics {
 	}
 
 	Material createMaterial(
-		const glm::vec3& color
+		const glm::vec3& color,
+		float specularFactor
 	) {
 		Material temp;
 		toFloat3(temp.color, color);
+		temp.specularFactor = specularFactor;
 		return temp;
 	}
 

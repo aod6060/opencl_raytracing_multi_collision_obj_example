@@ -35,6 +35,7 @@ struct Camera {
 
 struct Material {
     float3 color;
+    float specularFactor;
 };
 
 struct Sphere {
@@ -59,6 +60,7 @@ struct Hit {
 struct ReflectHit {
     struct Ray nextRay;
     float3 color;
+    float specularFactor;
 };
 
 struct Ray camera_makeRay(float2 point, struct Camera camera) {
@@ -131,7 +133,6 @@ struct ReflectHit computeAmbient(
     uint lightLength,
     __global struct Material* materials,
     uint materialsLength,
-    float specularFactor,
     float3 clearColor
 ) {
     struct Hit hit = closestIntersection(
@@ -185,7 +186,7 @@ struct ReflectHit computeAmbient(
         float ndoth = dot(N, H);
 
         float3 diffuse = m.color * lights[i].color * ndotl;
-        float3 specular = lights[i].color * pow(ndoth, specularFactor * 256.0f);
+        float3 specular = lights[i].color * pow(ndoth, m.specularFactor * 256.0f);
 
         light += (diffuse + specular) * lights[i].intencity;
     }
@@ -202,7 +203,7 @@ struct ReflectHit computeAmbient(
     struct ReflectHit reflectHit;
     reflectHit.nextRay = reflectRay;
     reflectHit.color = light;
-
+    reflectHit.specularFactor = m.specularFactor;
     return reflectHit;
 }
 
@@ -218,7 +219,6 @@ struct Color computeLighting(
     uint lightLength,
     __global struct Material* materials,
     uint materialsLength,
-    float specularFactor,
     float3 clearColor) {
 
     float3 light = (float3)(0.0f, 0.0f, 0.0f);
@@ -254,23 +254,15 @@ struct Color computeLighting(
         
 
         float3 diffuse = m.color * lights[i].color * ndotl;
-        float3 specular = lights[i].color * pow(ndoth, specularFactor * 256.0f);
+        float3 specular = lights[i].color * pow(ndoth, m.specularFactor * 256.0f);
 
         light += (diffuse + specular) * lights[i].intencity;
     }
 
     light += (float3)(0.1, 0.1, 0.1) * m.color;
-    /*
-    struct Color temp;
-    temp.r = light.x;
-    temp.g = light.y;
-    temp.b = light.z;
-
-    return temp;
-    */
     // Iteration1
     
-    if(specularFactor <= 0) {
+    if(m.specularFactor <= 0) {
         struct Color temp;
         temp.r = light.x;
         temp.g = light.y;
@@ -296,7 +288,6 @@ struct Color computeLighting(
         lightLength,
         materials,
         materialsLength,
-        specularFactor,
         clearColor
     );
 
@@ -310,16 +301,15 @@ struct Color computeLighting(
         lightLength,
         materials,
         materialsLength,
-        specularFactor,
         clearColor
     );
 
-    float3 ambient = (iteration1.color + finalIteration.color) * 0.5f;
+    float3 ambient = iteration1.color * iteration1.specularFactor + finalIteration.color * finalIteration.specularFactor;
 
     struct Color temp;
-    temp.r = light.x * (specularFactor) + ambient.x * (1.0 - specularFactor);
-    temp.g = light.y * (specularFactor) + ambient.y * (1.0 - specularFactor);
-    temp.b = light.z * (specularFactor) + ambient.z * (1.0 - specularFactor);
+    temp.r = light.x * (1.0f - m.specularFactor) + ambient.x * (m.specularFactor);
+    temp.g = light.y * (1.0f - m.specularFactor) + ambient.y * (m.specularFactor);
+    temp.b = light.z * (1.0f - m.specularFactor) + ambient.z * (m.specularFactor);
     
     return temp;
 }
@@ -365,7 +355,6 @@ struct Color raytracer(
         lightLength,
         materials,
         materialsLength,
-        0.5,
         (float3)(clearColor.r, clearColor.g, clearColor.b)
     );
 

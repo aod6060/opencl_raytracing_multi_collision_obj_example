@@ -12,6 +12,7 @@ namespace graphics {
 
 	struct Material {
 		cl_float3 color;
+		cl_float specularFactor;
 	};
 
 	struct Sphere {
@@ -66,7 +67,8 @@ namespace graphics {
 	);
 
 	Material createMaterial(
-		const glm::vec3& color
+		const glm::vec3& color,
+		float specularFactor
 	);
 
 	void uploadMaterials(std::vector<Material>& materials);
