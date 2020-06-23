@@ -22,6 +22,9 @@ namespace graphics {
 	cl_mem lights;
 	size_t lightsLength;
 
+	cl_mem materials;
+	size_t materialsLength;
+
 	void init() {
 		cl_uint length;
 		cl_int err;
@@ -135,6 +138,9 @@ namespace graphics {
 	}
 
 	void release() {
+		clReleaseMemObject(spheres);
+		clReleaseMemObject(lights);
+		clReleaseMemObject(materials);
 		clReleaseMemObject(screen);
 		clReleaseMemObject(framebuffer);
 		clReleaseKernel(presentKernel);
@@ -147,12 +153,12 @@ namespace graphics {
 	Sphere createSphere(
 		const glm::vec3& position,
 		float radius,
-		const glm::vec3& color
+		cl_uint materialIndex
 	) {
 		Sphere temp;
 		toFloat3(temp.position, position);
 		temp.radius = radius;
-		toFloat3(temp.color, color);
+		temp.materialIndex = materialIndex;
 		return temp;
 	}
 
@@ -198,6 +204,30 @@ namespace graphics {
 		}
 
 		lightsLength = l.size();
+	}
+
+	Material createMaterial(
+		const glm::vec3& color
+	) {
+		Material temp;
+		toFloat3(temp.color, color);
+		return temp;
+	}
+
+	void uploadMaterials(std::vector<Material>& m) {
+		if (materials) {
+			clReleaseMemObject(materials);
+		}
+		cl_int err;
+		materials = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, m.size() * sizeof(Material), m.data(), &err);
+
+		if (!materials) {
+			std::cout << "materials wasn't created" << std::endl;
+			app::exit();
+			exit(1);
+		}
+
+		materialsLength = m.size();
 	}
 
 	Camera createCamera(
@@ -324,8 +354,10 @@ namespace graphics {
 		err |= clSetKernelArg(rendererKernel, 2, sizeof(size_t), (void*)&spheresLength);
 		err |= clSetKernelArg(rendererKernel, 3, sizeof(cl_mem), (void*)&lights);
 		err |= clSetKernelArg(rendererKernel, 4, sizeof(size_t), (void*)&lightsLength);
-		err |= clSetKernelArg(rendererKernel, 5, sizeof(Camera), (void*)&camera);
-		err |= clSetKernelArg(rendererKernel, 6, sizeof(Color), (void*)&clearColor);
+		err |= clSetKernelArg(rendererKernel, 5, sizeof(cl_mem), (void*)&materials);
+		err |= clSetKernelArg(rendererKernel, 6, sizeof(size_t), (void*)&materialsLength);
+		err |= clSetKernelArg(rendererKernel, 7, sizeof(Camera), (void*)&camera);
+		err |= clSetKernelArg(rendererKernel, 8, sizeof(Color), (void*)&clearColor);
 
 		if (err != CL_SUCCESS) {
 			std::cout << "Failed to set rendererKernel Arguments" << std::endl;

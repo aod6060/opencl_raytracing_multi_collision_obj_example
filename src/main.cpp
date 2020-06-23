@@ -31,15 +31,31 @@ graphics::Camera camera;
 void app_init() {
 	graphics::init();
 
-	camera = graphics::createCamera(60.0f, app::getWidthCast<float>() / app::getHeightCast<float>(), 0.1f, 1024.0f, glm::vec3(0.0f));
+	camera = graphics::createCamera(
+		60.0f, 
+		app::getWidthCast<float>() / app::getHeightCast<float>(), 
+		0.1f, 
+		1024.0f, 
+		glm::vec3(0.0f));
+
+	// Materials
+	std::vector<graphics::Material> materials = {
+		graphics::createMaterial(glm::vec3(0.5f)),
+		graphics::createMaterial(glm::vec3(0.0f, 0.5f, 0.0f)),
+		graphics::createMaterial(glm::vec3(0.0f, 0.0f, 0.5f)),
+		graphics::createMaterial(glm::vec3(0.5f, 0.0f, 0.0f)),
+		graphics::createMaterial(glm::vec3(0.5f, 0.5f, 0.0f))
+	};
+
+	graphics::uploadMaterials(materials);
 
 	// Spheres
 	std::vector<graphics::Sphere> spheres = {
-		graphics::createSphere(glm::vec3(-8, 0, 0), 1, glm::vec3(0.5f)),
-		graphics::createSphere(glm::vec3(0, 0, -8), 1, glm::vec3(0.0f, 0.5f, 0.0f)),
-		graphics::createSphere(glm::vec3(8, 0, 0), 1, glm::vec3(0.0f, 0.0f, 0.5f)),
-		graphics::createSphere(glm::vec3(0, 0, 8), 1, glm::vec3(0.5f, 0.0f, 0.0f)),
-		graphics::createSphere(glm::vec3(0, -5001, 0), 5000, glm::vec3(1.0f, 1.0f, 0.0f))
+		graphics::createSphere(glm::vec3(-8, 0, 0), 1, 0),
+		graphics::createSphere(glm::vec3(0, 0, -8), 1, 1),
+		graphics::createSphere(glm::vec3(8, 0, 0), 1, 2),
+		graphics::createSphere(glm::vec3(0, 0, 8), 1, 3),
+		graphics::createSphere(glm::vec3(0, -5001, 0), 5000, 4)
 	};
 
 	graphics::uploadSpheres(spheres);
@@ -59,7 +75,7 @@ void app_render() {
 
 	cl_float3 clearColor;
 
-	graphics::toFloat3(clearColor, glm::vec3(0.0f));
+	graphics::toFloat3(clearColor, glm::vec3(0.0f, 0.0f, 0.0f));
 
 	graphics::raytrace(clearColor, camera);
 

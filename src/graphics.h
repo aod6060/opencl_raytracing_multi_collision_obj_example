@@ -10,10 +10,22 @@ namespace graphics {
 		float b;
 	};
 
+	struct Material {
+		cl_float3 color;
+	};
+
 	struct Sphere {
 		cl_float3 position;
+		cl_uint materialIndex;
+
+		// Sphere Data...
 		cl_float radius;
-		cl_float3 color;
+		// Plane Data
+		// Cube Data
+		// Torus Data
+		// Capsule Data
+		// Cylinder Data
+		// Triangle Data
 	};
 
 	struct Light {
@@ -42,7 +54,7 @@ namespace graphics {
 	Sphere createSphere(
 		const glm::vec3& position,
 		float radius,
-		const glm::vec3& color
+		cl_uint materialIndex
 	);
 
 	void uploadSpheres(std::vector<Sphere>& spheres);
@@ -52,6 +64,12 @@ namespace graphics {
 		float intensity,
 		const glm::vec3& color
 	);
+
+	Material createMaterial(
+		const glm::vec3& color
+	);
+
+	void uploadMaterials(std::vector<Material>& materials);
 
 	void uploadLights(std::vector<Light>& lights);
 
