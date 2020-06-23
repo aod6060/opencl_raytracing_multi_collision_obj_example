@@ -181,6 +181,7 @@ namespace graphics {
 		toFloat3(light.position, position);
 		light.intencity = intensity;
 		toFloat3(light.color, color);
+		return light;
 	}
 
 	void uploadLights(std::vector<Light>& l) {
@@ -217,12 +218,93 @@ namespace graphics {
 
 		temp.zmin = zmin;
 		temp.zmax = zmax;
+
+		temp.yaw = 0.0f;
+		temp.pitch = 0.0f;
+		return temp;
 	}
 
 	void updateCamera(
 		Camera& camera, 
+		float delta,
 		float rotSpeed, 
 		float walkSpeed) {
+
+		if (input::isKeyPressed(input::Keyboard::KB_LEFT)) {
+			camera.yaw -= rotSpeed * delta;
+		}
+
+		if (input::isKeyPressed(input::Keyboard::KB_RIGHT)) {
+			camera.yaw += rotSpeed * delta;
+		}
+
+		if (camera.yaw < -360.0f) {
+			camera.yaw += 360.0f;
+		}
+
+		if (camera.yaw > 360.0f) {
+			camera.yaw -= 360.0f;
+		}
+
+		if (input::isKeyPressed(input::Keyboard::KB_UP)) {
+			camera.pitch += rotSpeed * delta;
+		}
+
+		if (input::isKeyPressed(input::Keyboard::KB_DOWN)) {
+			camera.pitch -= rotSpeed * delta;
+		}
+
+
+		if (camera.pitch < -90.0f) {
+			camera.pitch = -90.0f;
+		}
+
+		if (camera.pitch > 90.0f) {
+			camera.pitch = 90.0f;
+		}
+
+		glm::vec3 direction = glm::vec3(
+			glm::cos(glm::radians(camera.yaw)) * glm::cos(glm::radians(camera.pitch)),
+			glm::sin(glm::radians(camera.pitch)),
+			glm::sin(glm::radians(camera.yaw)) * glm::cos(glm::radians(camera.pitch))
+		);
+
+		toFloat3(camera.forward, glm::normalize(direction));
+		toFloat3(camera.right, glm::normalize(glm::cross(toVec3(camera.forward), glm::vec3(0.0f, 1.0f, 0.0f))));
+		toFloat3(camera.up, glm::cross(toVec3(camera.forward), toVec3(camera.right)));
+
+		glm::vec3 forward = glm::vec3(
+			camera.forward.x,
+			0.0f,
+			camera.forward.z);
+
+		if (input::isKeyPressed(input::Keyboard::KB_W)) {
+			camera.position.x += walkSpeed * delta * forward.x;
+			camera.position.z += walkSpeed * delta * forward.z;
+		}
+
+		if (input::isKeyPressed(input::Keyboard::KB_S)) {
+			camera.position.x -= walkSpeed * delta * forward.x;
+			camera.position.z -= walkSpeed * delta * forward.z;
+		}
+
+		if (input::isKeyPressed(input::Keyboard::KB_A)) {
+			camera.position.x -= walkSpeed * delta * camera.right.x;
+			camera.position.z -= walkSpeed * delta * camera.right.z;
+		}
+
+		if (input::isKeyPressed(input::Keyboard::KB_D)) {
+			camera.position.x += walkSpeed * delta * camera.right.x;
+			camera.position.z += walkSpeed * delta * camera.right.z;
+		}
+
+		if (input::isKeyPressed(input::Keyboard::KB_SPACE)) {
+			camera.position.y += walkSpeed * delta;
+		}
+
+		if (input::isKeyPressed(input::Keyboard::KB_LSHIFT)) {
+			camera.position.y -= walkSpeed * delta;
+		}
 	}
 
 	void raytrace(cl_float3 clearColor, Camera& camera) {

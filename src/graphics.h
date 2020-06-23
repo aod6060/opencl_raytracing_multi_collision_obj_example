@@ -31,6 +31,8 @@ namespace graphics {
 		cl_float height;
 		cl_float zmin;
 		cl_float zmax;
+		cl_float yaw;
+		cl_float pitch;
 	};
 
 
@@ -61,7 +63,8 @@ namespace graphics {
 		glm::vec3 position);
 
 	void updateCamera(
-		Camera& camera, 
+		Camera& camera,
+		float delta,
 		float rotSpeed, 
 		float walkSpeed);
 

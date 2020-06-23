@@ -5,6 +5,7 @@ void app_update(float delta);
 void app_render();
 void app_release();
 
+/*
 glm::vec3 toVec(cl_float3& v) {
 	return glm::vec3(v.x, v.y, v.z);
 }
@@ -14,7 +15,7 @@ void setFloat3(cl_float3& out, glm::vec3 v) {
 	out.y = v.y;
 	out.z = v.z;
 }
-
+*/
 int main(int argc, char** argv) {
 
 	app::AppConfig config;
@@ -36,6 +37,7 @@ int main(int argc, char** argv) {
 	return 0;
 }
 
+/*
 struct Color {
 	float r;
 	float g;
@@ -112,9 +114,44 @@ cl_mem framebuffer;
 cl_mem spheresMem;
 cl_mem lightsMem;
 cl_mem screen;
-
+*/
 // 
+
+graphics::Camera camera;
+
 void app_init() {
+	graphics::init();
+
+	camera = graphics::createCamera(60.0f, app::getWidthCast<float>() / app::getHeightCast<float>(), 0.1f, 1024.0f, glm::vec3(0.0f));
+
+	// Spheres
+
+	/*
+	Sphere(glm::vec3(-8, 0, 0), 1, glm::vec3(0.5f, 0.5f, 0.5f)),
+	Sphere(glm::vec3(0, 0, -8), 1, glm::vec3(0.0f, 0.5f, 0.0f)),
+	Sphere(glm::vec3(8, 0, 0), 1, glm::vec3(0.0f, 0.0f, 0.5f)),
+	Sphere(glm::vec3(0, 0, 8), 1, glm::vec3(0.5f, 0.0f, 0.0f)),
+	Sphere(glm::vec3(0, -5001, 0), 5000, glm::vec3(1.0f, 1.0f, 0.0f))
+	*/
+	std::vector<graphics::Sphere> spheres = {
+		graphics::createSphere(glm::vec3(-8, 0, 0), 1, glm::vec3(0.5f)),
+		graphics::createSphere(glm::vec3(0, 0, -8), 1, glm::vec3(0.0f, 0.5f, 0.0f)),
+		graphics::createSphere(glm::vec3(8, 0, 0), 1, glm::vec3(0.0f, 0.0f, 0.5f)),
+		graphics::createSphere(glm::vec3(0, 0, 8), 1, glm::vec3(0.5f, 0.0f, 0.0f)),
+		graphics::createSphere(glm::vec3(0, -5001, 0), 5000, glm::vec3(1.0f, 1.0f, 0.0f))
+	};
+
+	graphics::uploadSpheres(spheres);
+
+	// Lights
+	//Light(glm::vec3(0.0f, 1.0f, 0.0f), 0.6f, glm::vec3(1.0f, 1.0f, 1.0f))
+	std::vector<graphics::Light> lights = {
+		graphics::createLight(glm::vec3(0.0f, 1.0f, 0.0f), 0.6f, glm::vec3(1.0f, 1.0f, 1.0f))
+	};
+
+	graphics::uploadLights(lights);
+
+	/*
 	//fb_init();
 	camera_setup();
 
@@ -251,12 +288,25 @@ void app_init() {
 		std::getchar();
 		exit(1);
 	}
+	*/
 }
 void app_update(float delta) {
-	camera_update(delta);
+	//camera_update(delta);
+
+	graphics::updateCamera(camera, delta, 64.0f, 4.0f);
 }
 
 void app_render() {
+
+	cl_float3 clearColor;
+
+	graphics::toFloat3(clearColor, glm::vec3(0.0f));
+
+	graphics::raytrace(clearColor, camera);
+
+	graphics::present();
+
+	/*
 	cl_int err;
 	// Render
 	Color clearColor;
@@ -330,9 +380,11 @@ void app_render() {
 	}
 	// Read screen buffer
 	SDL_UnlockSurface(winScreen);
+	*/
 }
 
 void app_release() {
+	/*
 	clReleaseMemObject(lightsMem);
 	clReleaseMemObject(spheresMem);
 	clReleaseMemObject(screen);
@@ -342,10 +394,12 @@ void app_release() {
 	clReleaseProgram(program);
 	clReleaseCommandQueue(commands);
 	clReleaseContext(context);
+	*/
+	graphics::release();
 }
 
 
-
+/*
 float yaw = 0.0f;
 float pitch = 0.0f;
 
@@ -448,3 +502,4 @@ void camera_update(float delta) {
 		camera.pos.y -= speed * delta;
 	}
 }
+*/

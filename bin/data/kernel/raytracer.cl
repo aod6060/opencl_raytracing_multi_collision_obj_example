@@ -29,6 +29,8 @@ struct Camera {
     float height;
     float zmin;
     float zmax;
+    float yaw;
+    float pitch;
 };
 
 struct Sphere {
