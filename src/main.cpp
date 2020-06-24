@@ -27,6 +27,7 @@ int main(int argc, char** argv) {
 }
 
 graphics::Camera camera;
+graphics::GlobalDirectionalLight globalLight;
 
 void app_init() {
 	graphics::init();
@@ -59,24 +60,20 @@ void app_init() {
 	};
 
 	graphics::uploadSceneObject(sceneObjects);
-
-	/*
-	std::vector<graphics::SceneObject> sceneObjects = {
-		graphics::createSphere(glm::vec3(-8, 0, 0), 1, 0),
-		graphics::createSphere(glm::vec3(0, 0, -8), 1, 1),
-		graphics::createSphere(glm::vec3(8, 0, 0), 1, 2),
-		graphics::createSphere(glm::vec3(0, 0, 8), 1, 3),
-		graphics::createSphere(glm::vec3(0, -5001, 0), 5000, 4)
-	};
-
-	graphics::uploadSpheres(spheres);
-	*/
 	// Lights
-	std::vector<graphics::Light> lights = {
-		graphics::createLight(glm::vec3(0.0f, 1.0f, 0.0f), 0.6f, glm::vec3(1.0f, 1.0f, 1.0f))
-	};
 
-	graphics::uploadLights(lights);
+	glm::vec3 minLight = glm::vec3(-1.0f, -1.0f, -1.0f);
+	glm::vec3 maxLight = glm::vec3(1.0f, 1.0f, 1.0f);
+
+	glm::vec3 dir = glm::normalize(maxLight - minLight);
+
+
+	globalLight = graphics::createGlobalDirectionalLight(
+		dir,
+		0.6,
+		glm::vec3(1.0f)
+	);
+
 }
 void app_update(float delta) {
 	graphics::updateCamera(camera, delta, 64.0f, 4.0f);
@@ -87,9 +84,7 @@ void app_render() {
 	cl_float3 clearColor;
 
 	graphics::toFloat3(clearColor, glm::vec3(0.53f, 0.81f, 0.92f));
-
-	graphics::raytrace(clearColor, camera);
-
+	graphics::raytrace(clearColor, camera, globalLight);
 	graphics::present();
 }
 

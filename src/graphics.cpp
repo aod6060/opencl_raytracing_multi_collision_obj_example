@@ -19,9 +19,6 @@ namespace graphics {
 	cl_mem sceneObjects;
 	size_t sceneObjectsLength;
 
-	cl_mem lights;
-	size_t lightsLength;
-
 	cl_mem materials;
 	size_t materialsLength;
 
@@ -139,7 +136,6 @@ namespace graphics {
 
 	void release() {
 		clReleaseMemObject(sceneObjects);
-		clReleaseMemObject(lights);
 		clReleaseMemObject(materials);
 		clReleaseMemObject(screen);
 		clReleaseMemObject(framebuffer);
@@ -179,65 +175,6 @@ namespace graphics {
 		sceneObjectsLength = so.size();
 	}
 
-
-	/*
-	Sphere createSphere(
-		const glm::vec3& position,
-		float radius,
-		cl_uint materialIndex
-	) {
-		Sphere temp;
-		toFloat3(temp.position, position);
-		temp.radius = radius;
-		temp.materialIndex = materialIndex;
-		return temp;
-	}
-
-	void uploadSpheres(std::vector<Sphere>& s) {
-		if (spheres) {
-			clReleaseMemObject(spheres);
-		}
-		cl_int err;
-		spheres = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, s.size() * sizeof(Sphere), s.data(), &err);
-
-		if (!spheres) {
-			std::cout << "spheres wasn't created" << std::endl;
-			app::exit();
-			exit(1);
-		}
-
-		spheresLength = s.size();
-	}
-	*/
-
-	Light createLight(
-		const glm::vec3& position,
-		float intensity,
-		const glm::vec3& color
-	) {
-		Light light;
-		toFloat3(light.position, position);
-		light.intencity = intensity;
-		toFloat3(light.color, color);
-		return light;
-	}
-
-	void uploadLights(std::vector<Light>& l) {
-		if (lights) {
-			clReleaseMemObject(lights);
-		}
-		cl_int err;
-		lights = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, l.size() * sizeof(Light), l.data(), &err);
-
-		if (!lights) {
-			std::cout << "spheres wasn't created" << std::endl;
-			app::exit();
-			exit(1);
-		}
-
-		lightsLength = l.size();
-	}
-
 	Material createMaterial(
 		const glm::vec3& color,
 		float specularFactor
@@ -262,6 +199,18 @@ namespace graphics {
 		}
 
 		materialsLength = m.size();
+	}
+
+	GlobalDirectionalLight createGlobalDirectionalLight(
+		const glm::vec3& direction,
+		float intensity,
+		const glm::vec3& color
+	) {
+		GlobalDirectionalLight temp;
+		toFloat3(temp.direction, direction);
+		temp.intencity = intensity;
+		toFloat3(temp.color, color);
+		return temp;
 	}
 
 	Camera createCamera(
@@ -371,7 +320,7 @@ namespace graphics {
 		}
 	}
 
-	void raytrace(cl_float3 clearColor, Camera& camera) {
+	void raytrace(cl_float3 clearColor, Camera& camera, GlobalDirectionalLight& light) {
 		cl_int err;
 
 		size_t globalWorkSize[2] = {
@@ -386,12 +335,11 @@ namespace graphics {
 		err = clSetKernelArg(rendererKernel, 0, sizeof(cl_mem), (void*)&framebuffer);
 		err |= clSetKernelArg(rendererKernel, 1, sizeof(cl_mem), (void*)&sceneObjects);
 		err |= clSetKernelArg(rendererKernel, 2, sizeof(size_t), (void*)&sceneObjectsLength);
-		err |= clSetKernelArg(rendererKernel, 3, sizeof(cl_mem), (void*)&lights);
-		err |= clSetKernelArg(rendererKernel, 4, sizeof(size_t), (void*)&lightsLength);
-		err |= clSetKernelArg(rendererKernel, 5, sizeof(cl_mem), (void*)&materials);
-		err |= clSetKernelArg(rendererKernel, 6, sizeof(size_t), (void*)&materialsLength);
-		err |= clSetKernelArg(rendererKernel, 7, sizeof(Camera), (void*)&camera);
-		err |= clSetKernelArg(rendererKernel, 8, sizeof(Color), (void*)&clearColor);
+		err |= clSetKernelArg(rendererKernel, 3, sizeof(cl_mem), (void*)&materials);
+		err |= clSetKernelArg(rendererKernel, 4, sizeof(size_t), (void*)&materialsLength);
+		err |= clSetKernelArg(rendererKernel, 5, sizeof(Camera), (void*)&camera);
+		err |= clSetKernelArg(rendererKernel, 6, sizeof(GlobalDirectionalLight), (void*)&light);
+		err |= clSetKernelArg(rendererKernel, 7, sizeof(Color), (void*)&clearColor);
 
 		if (err != CL_SUCCESS) {
 			std::cout << "Failed to set rendererKernel Arguments" << std::endl;

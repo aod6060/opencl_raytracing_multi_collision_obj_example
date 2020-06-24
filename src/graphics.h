@@ -46,24 +46,8 @@ namespace graphics {
 		// Triangle
 	};
 
-	/*
-	struct Sphere {
-		cl_float3 position;
-		cl_uint materialIndex;
-
-		// Sphere Data...
-		cl_float radius;
-		// Plane Data
-		// Cube Data
-		// Torus Data
-		// Capsule Data
-		// Cylinder Data
-		// Triangle Data
-	};
-	*/
-
-	struct Light {
-		cl_float3 position;
+	struct GlobalDirectionalLight {
+		cl_float3 direction;
 		cl_float intencity;
 		cl_float3 color;
 	};
@@ -84,25 +68,10 @@ namespace graphics {
 
 	void init();
 	void release();
-	/*
-	Sphere createSphere(
-		const glm::vec3& position,
-		float radius,
-		cl_uint materialIndex
-	);
-
-	void uploadSpheres(std::vector<Sphere>& spheres);
-	*/
 
 	SceneObject createSphereSceneObject(const glm::vec3& position, cl_uint materialIndex, float radius);
 
 	void uploadSceneObject(std::vector<SceneObject>& sceneObjects);
-
-	Light createLight(
-		const glm::vec3& position,
-		float intensity,
-		const glm::vec3& color
-	);
 
 	Material createMaterial(
 		const glm::vec3& color,
@@ -111,8 +80,6 @@ namespace graphics {
 
 	void uploadMaterials(std::vector<Material>& materials);
 
-	void uploadLights(std::vector<Light>& lights);
-
 	Camera createCamera(
 		float fov, 
 		float aspect, 
@@ -120,13 +87,19 @@ namespace graphics {
 		float zmax, 
 		glm::vec3 position);
 
+	GlobalDirectionalLight createGlobalDirectionalLight(
+		const glm::vec3& direction,
+		float intensity,
+		const glm::vec3& color
+	);
+
 	void updateCamera(
 		Camera& camera,
 		float delta,
 		float rotSpeed, 
 		float walkSpeed);
 
-	void raytrace(cl_float3 clearColor, Camera& camera);
+	void raytrace(cl_float3 clearColor, Camera& camera, GlobalDirectionalLight& light);
 
 	void present();
 

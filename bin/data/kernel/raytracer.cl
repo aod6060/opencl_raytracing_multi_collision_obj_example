@@ -77,9 +77,17 @@ struct Sphere {
     float radius;
 };
 */
+/*
 struct Light {
     float3 position;
     float intencity;
+    float3 color;
+};
+*/
+
+struct GlobalDirectionalLight {
+    float3 direction;
+    float intensity;
     float3 color;
 };
 
@@ -159,6 +167,7 @@ float3 reflect(float3 R, float3 N) {
     return 2.0f * N * dot(N, R) - R;
 }
 
+/*
 struct ReflectHit computeAmbient(
     struct Ray ray,
     float zmin,
@@ -242,6 +251,7 @@ struct ReflectHit computeAmbient(
     reflectHit.specularFactor = m.specularFactor;
     return reflectHit;
 }
+*/
 
 struct Color computeLighting(
     struct Ray ray,
@@ -251,16 +261,53 @@ struct Color computeLighting(
     struct Hit hit, 
     __global struct SceneObject* sceneObjects,
     uint sceneObjectsLength,
-    __global struct Light* lights, 
-    uint lightLength,
     __global struct Material* materials,
     uint materialsLength,
+    struct GlobalDirectionalLight globalLight,
     float3 clearColor) {
 
     float3 light = (float3)(0.0f, 0.0f, 0.0f);
 
     struct Material m = materials[hit.sceneObject.materialIndex];
 
+    struct Ray shadowRay;
+    shadowRay.position = P;
+    shadowRay.direction = globalLight.direction;
+
+    struct Hit shadowHit = closestIntersection(
+        shadowRay,
+        0.001f,
+        1024.0f,
+        sceneObjects,
+        sceneObjectsLength,
+        1024.0f
+    );
+
+    if(shadowHit.isHit) {
+        struct Color temp;
+        temp.r = 0;
+        temp.g = 0;
+        temp.b = 0;
+        return temp;
+    }
+
+    float3 L = normalize(globalLight.direction);
+    float3 H = normalize(L + V);
+
+    float ndotl = dot(N, L);
+    float ndoth = dot(N, H);
+
+    float3 diffuse = m.color * globalLight.color * ndotl * (1.0 - m.specularFactor);
+    float3 specular = globalLight.color * pow(ndoth, m.specularFactor * 256.0f) * m.specularFactor;
+
+    float3 finalColor = (diffuse + specular);
+
+    struct Color temp;
+    temp.r = finalColor.x;
+    temp.g = finalColor.y;
+    temp.b = finalColor.z;
+    return temp;
+    /*
     for(uint i = 0; i < lightLength; i++) {
 
         struct Ray shadowRay;
@@ -291,10 +338,8 @@ struct Color computeLighting(
 
         light += (diffuse + specular) * lights[i].intencity;
     }
-
-    light += (float3)(0.1, 0.1, 0.1) * m.color;
     // Iteration1
-    
+    /*
     if(m.specularFactor <= 0) {
         struct Color temp;
         temp.r = light.x;
@@ -302,7 +347,8 @@ struct Color computeLighting(
         temp.b = light.z;
         return temp;
     }
-
+    */
+    /*
     // Ambient
     float3 R = reflect(-ray.direction, N);
 
@@ -345,6 +391,7 @@ struct Color computeLighting(
     temp.b = light.z * (1.0f - m.specularFactor) + ambient.z * (m.specularFactor);
     
     return temp;
+    */
 }
 
 struct Color raytracer(
@@ -354,10 +401,9 @@ struct Color raytracer(
     struct Color clearColor, 
     __global struct SceneObject* sceneObjects, 
     uint sceneObjectsLength,
-    __global struct Light* lights,
-    uint lightsLength,
     __global struct Material* materials,
-    uint materialsLength) 
+    uint materialsLength,
+    struct GlobalDirectionalLight globalLight) 
 {
     struct Hit hit = closestIntersection(
         ray, 
@@ -384,10 +430,9 @@ struct Color raytracer(
         hit,
         sceneObjects,
         sceneObjectsLength,
-        lights,
-        lightsLength,
         materials,
         materialsLength,
+        globalLight,
         (float3)(clearColor.r, clearColor.g, clearColor.b)
     );
 
@@ -398,11 +443,10 @@ __kernel void renderer(
     __global struct Color* framebuffer,
     __global struct SceneObject* sceneObjects,
     uint sceneObjectsLength,
-    __global struct Light* lights,
-    uint lightsLength,
     __global struct Material* materials,
     uint materialsLength,
     struct Camera camera,
+    struct GlobalDirectionalLight globalLight,
     struct Color clearColor
 ) {
     uint x = get_global_id(0);
@@ -424,10 +468,9 @@ __kernel void renderer(
         clearColor, 
         sceneObjects, 
         sceneObjectsLength,
-        lights,
-        lightsLength,
         materials,
-        materialsLength);
+        materialsLength,
+        globalLight);
 
     
     framebuffer[y * width + x].r = clamp(color.r, 0.0f, 1.0f);
